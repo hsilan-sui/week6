@@ -3,18 +3,20 @@ const bcrypt = require("bcrypt");
 const router = express.Router();
 
 const { dataSource } = require("../db/data-source");
+const { isNotValidString, isUndefined } = require("../utils/validUtils");
+const appError = require("../utils/appError");
 
 const logger = require("../utils/logger")("User");
 
 const saltRounds = 10;
 
-function isUndefined(value) {
-  return value === undefined;
-}
+// function isUndefined(value) {
+//   return value === undefined;
+// }
 
-function isNotValidSting(value) {
-  return typeof value !== "string" || value.trim().length === 0 || value === "";
-}
+// function isNotValidString(value) {
+//   return typeof value !== "string" || value.trim().length === 0 || value === "";
+// }
 
 //開發使用者
 //[POST] 註冊使用者：{url}/api/users/signup
@@ -39,19 +41,19 @@ router.post("/signup", async (req, res, next) => {
     // 驗證必填欄位
     if (
       isUndefined(name) ||
-      isNotValidSting(name) ||
+      isNotValidString(name) ||
       isUndefined(email) ||
-      isNotValidSting(email) ||
+      isNotValidString(email) ||
       isUndefined(password) ||
-      isNotValidSting(password)
+      isNotValidString(password)
     ) {
       logger.warn("欄位未填寫正確");
-      res.status(400).json({
-        status: "failed",
-        message: "欄位未填寫正確",
-      });
-
+      next(appError(400, "欄位未填寫正確"));
       return;
+      // res.status(400).json({
+      //   status: "failed",
+      //   message: "欄位未填寫正確",
+      // });
     }
 
     //驗證密碼規則
@@ -60,14 +62,20 @@ router.post("/signup", async (req, res, next) => {
       logger.warn(
         "建立使用者錯誤: 密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字"
       );
-
-      res.status(400).json({
-        status: "failed",
-        message:
-          "密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字",
-      });
-
+      next(
+        appError(
+          400,
+          "密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字"
+        )
+      );
       return;
+      // res.status(400).json({
+      //   status: "failed",
+      //   message:
+      //     "密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字",
+      // });
+
+      // return;
     }
 
     //初始化User Repo物件
@@ -81,12 +89,14 @@ router.post("/signup", async (req, res, next) => {
     //該email使用者若存在
     if (existUser) {
       logger.warn("建立使用者錯誤: Email 已被使用");
-      res.status(409).json({
-        status: "failed",
-        message: "Email已被使用",
-      });
-
+      next(appError(409, "Email已被使用"));
       return;
+      // res.status(409).json({
+      //   status: "failed",
+      //   message: "Email已被使用",
+      // });
+
+      // return;
     }
 
     //開始準備建立使用者註冊資料

@@ -3,21 +3,22 @@ const express = require("express");
 const router = express.Router();
 
 const { dataSource } = require("../db/data-source");
-
+const { isNotValidString, isUndefined } = require("../utils/validUtils");
+const appError = require("../utils/appError");
 const logger = require("../utils/logger")("Skill");
 
 //防呆函式
-function isUndefined(value) {
-  return value === undefined;
-}
+// function isUndefined(value) {
+//   return value === undefined;
+// }
 
-function isNotValidSting(value) {
-  return typeof value !== "string" || value.trim().length === 0 || value === "";
-}
+// function isNotValidString(value) {
+//   return typeof value !== "string" || value.trim().length === 0 || value === "";
+// }
 
-function isNotValidInteger(value) {
-  return typeof value !== "number" || value < 0 || value % 1 !== 0;
-}
+// function isNotValidInteger(value) {
+//   return typeof value !== "number" || value < 0 || value % 1 !== 0;
+// }
 
 // res.status(200).json({
 //   status: "success",
@@ -51,11 +52,13 @@ router.post("/", async (req, res, next) => {
     const { name } = req.body;
     //console.log(name);
 
-    if (isUndefined(name) || isNotValidSting(name)) {
-      res.status(400).json({
-        status: "failed",
-        message: "欄位未填寫正確",
-      });
+    if (isUndefined(name) || isNotValidString(name)) {
+      next(appError(400, "欄位未填寫正確"));
+      return;
+      // res.status(400).json({
+      //   status: "failed",
+      //   message: "欄位未填寫正確",
+      // });
     }
 
     const skillRepo = dataSource.getRepository("Skill");
@@ -68,10 +71,12 @@ router.post("/", async (req, res, next) => {
     });
 
     if (existData.length > 0) {
-      res.status(409).json({
-        status: "failed",
-        message: "資料重複",
-      });
+      next(appError(409, "資料重複"));
+      return;
+      // res.status(409).json({
+      //   status: "failed",
+      //   message: "資料重複",
+      // });
     }
 
     const newSkill = skillRepo.create({
@@ -109,11 +114,13 @@ router.delete("/:skillId", async (req, res, next) => {
   try {
     const { skillId } = req.params;
     //防呆
-    if (isUndefined(skillId) || isNotValidSting(skillId)) {
-      res.status(400).json({
-        status: "failed",
-        message: "ID錯誤",
-      });
+    if (isUndefined(skillId) || isNotValidString(skillId)) {
+      next(appError(400, "ID錯誤"));
+      return;
+      // res.status(400).json({
+      //   status: "failed",
+      //   message: "ID錯誤",
+      // });
     }
 
     const skillRepo = dataSource.getRepository("Skill");
@@ -121,10 +128,12 @@ router.delete("/:skillId", async (req, res, next) => {
     const result = await skillRepo.delete(skillId);
 
     if (result.affected === 0) {
-      res.status(400).json({
-        status: "failed",
-        message: "ID錯誤",
-      });
+      next(appError(400, "ID錯誤"));
+      return;
+      // res.status(400).json({
+      //   status: "failed",
+      //   message: "ID錯誤",
+      // });
     }
 
     res.status(200).json({

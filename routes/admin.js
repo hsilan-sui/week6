@@ -2,19 +2,25 @@ const express = require("express");
 
 const router = express.Router();
 const { dataSource } = require("../db/data-source");
+const {
+  isNotValidString,
+  isNotValidInteger,
+  isUndefined,
+} = require("../utils/validUtils");
+const appError = require("../utils/appError");
 const logger = require("../utils/logger")("Admin");
 
-function isUndefined(value) {
-  return value === undefined;
-}
+// function isUndefined(value) {
+//   return value === undefined;
+// }
 
-function isNotValidSting(value) {
-  return typeof value !== "string" || value.trim().length === 0 || value === "";
-}
+// function isNotValidString(value) {
+//   return typeof value !== "string" || value.trim().length === 0 || value === "";
+// }
 
-function isNotValidInteger(value) {
-  return typeof value !== "number" || value < 0 || value % 1 !== 0;
-}
+// function isNotValidInteger(value) {
+//   return typeof value !== "number" || value < 0 || value % 1 !== 0;
+// }
 
 router.post("/coaches/courses", async (req, res, next) => {
   try {
@@ -30,29 +36,31 @@ router.post("/coaches/courses", async (req, res, next) => {
     } = req.body;
     if (
       isUndefined(userId) ||
-      isNotValidSting(userId) ||
+      isNotValidString(userId) ||
       isUndefined(skillId) ||
-      isNotValidSting(skillId) ||
+      isNotValidString(skillId) ||
       isUndefined(name) ||
-      isNotValidSting(name) ||
+      isNotValidString(name) ||
       isUndefined(description) ||
-      isNotValidSting(description) ||
+      isNotValidString(description) ||
       isUndefined(startAt) ||
-      isNotValidSting(startAt) ||
+      isNotValidString(startAt) ||
       isUndefined(endAt) ||
-      isNotValidSting(endAt) ||
+      isNotValidString(endAt) ||
       isUndefined(maxParticipants) ||
       isNotValidInteger(maxParticipants) ||
       isUndefined(meetingUrl) ||
-      isNotValidSting(meetingUrl) ||
+      isNotValidString(meetingUrl) ||
       !meetingUrl.startsWith("https")
     ) {
       logger.warn("欄位未填寫正確");
-      res.status(400).json({
-        status: "failed",
-        message: "欄位未填寫正確",
-      });
+      next(appError(400, "欄位未填寫正確"));
       return;
+      // res.status(400).json({
+      //   status: "failed",
+      //   message: "欄位未填寫正確",
+      // });
+      // return;
     }
     const userRepository = dataSource.getRepository("User");
     const existingUser = await userRepository.findOne({
@@ -61,18 +69,22 @@ router.post("/coaches/courses", async (req, res, next) => {
     });
     if (!existingUser) {
       logger.warn("使用者不存在");
-      res.status(400).json({
-        status: "failed",
-        message: "使用者不存在",
-      });
+      next(appError(400, "使用者不存在"));
       return;
+      // res.status(400).json({
+      //   status: "failed",
+      //   message: "使用者不存在",
+      // });
+      // return;
     } else if (existingUser.role !== "COACH") {
       logger.warn("使用者尚未成為教練");
-      res.status(400).json({
-        status: "failed",
-        message: "使用者尚未成為教練",
-      });
+      next(appError(400, "使用者尚未成為教練"));
       return;
+      // res.status(400).json({
+      //   status: "failed",
+      //   message: "使用者尚未成為教練",
+      // });
+      // return;
     }
     const courseRepo = dataSource.getRepository("Course");
     const newCourse = courseRepo.create({
@@ -114,29 +126,32 @@ router.put("/coaches/courses/:courseId", async (req, res, next) => {
       meeting_url: meetingUrl,
     } = req.body;
     if (
-      isNotValidSting(courseId) ||
+      isNotValidString(courseId) ||
       isUndefined(skillId) ||
-      isNotValidSting(skillId) ||
+      isNotValidString(skillId) ||
       isUndefined(name) ||
-      isNotValidSting(name) ||
+      isNotValidString(name) ||
       isUndefined(description) ||
-      isNotValidSting(description) ||
+      isNotValidString(description) ||
       isUndefined(startAt) ||
-      isNotValidSting(startAt) ||
+      isNotValidString(startAt) ||
       isUndefined(endAt) ||
-      isNotValidSting(endAt) ||
+      isNotValidString(endAt) ||
       isUndefined(maxParticipants) ||
       isNotValidInteger(maxParticipants) ||
       isUndefined(meetingUrl) ||
-      isNotValidSting(meetingUrl) ||
+      isNotValidString(meetingUrl) ||
       !meetingUrl.startsWith("https")
     ) {
       logger.warn("欄位未填寫正確");
-      res.status(400).json({
-        status: "failed",
-        message: "欄位未填寫正確",
-      });
+
+      next(appError(400, "欄位未填寫正確"));
       return;
+      // res.status(400).json({
+      //   status: "failed",
+      //   message: "欄位未填寫正確",
+      // });
+      // return;
     }
     const courseRepo = dataSource.getRepository("Course");
     const existingCourse = await courseRepo.findOne({
@@ -144,11 +159,13 @@ router.put("/coaches/courses/:courseId", async (req, res, next) => {
     });
     if (!existingCourse) {
       logger.warn("課程不存在");
-      res.status(400).json({
-        status: "failed",
-        message: "課程不存在",
-      });
+      next(appError(400, "課程不存在"));
       return;
+      // res.status(400).json({
+      //   status: "failed",
+      //   message: "課程不存在",
+      // });
+      // return;
     }
     const updateCourse = await courseRepo.update(
       {
@@ -166,11 +183,13 @@ router.put("/coaches/courses/:courseId", async (req, res, next) => {
     );
     if (updateCourse.affected === 0) {
       logger.warn("更新課程失敗");
-      res.status(400).json({
-        status: "failed",
-        message: "更新課程失敗",
-      });
+      next(appError(400, "更新課程失敗"));
       return;
+      // res.status(400).json({
+      //   status: "failed",
+      //   message: "更新課程失敗",
+      // });
+      // return;
     }
     const savedCourse = await courseRepo.findOne({
       where: { id: courseId },
@@ -199,26 +218,30 @@ router.post("/coaches/:userId", async (req, res, next) => {
       isUndefined(experienceYears) ||
       isNotValidInteger(experienceYears) ||
       isUndefined(description) ||
-      isNotValidSting(description)
+      isNotValidString(description)
     ) {
       logger.warn("欄位未填寫正確");
-      res.status(400).json({
-        status: "failed",
-        message: "欄位未填寫正確",
-      });
+      next(appError(400, "欄位未填寫正確"));
       return;
+      // res.status(400).json({
+      //   status: "failed",
+      //   message: "欄位未填寫正確",
+      // });
+      // return;
     }
     if (
       profileImageUrl &&
-      !isNotValidSting(profileImageUrl) &&
+      !isNotValidString(profileImageUrl) &&
       !profileImageUrl.startsWith("https")
     ) {
       logger.warn("大頭貼網址錯誤");
-      res.status(400).json({
-        status: "failed",
-        message: "欄位未填寫正確",
-      });
+      next(appError(400, "欄位未填寫正確"));
       return;
+      // res.status(400).json({
+      //   status: "failed",
+      //   message: "欄位未填寫正確",
+      // });
+      // return;
     }
     const userRepository = dataSource.getRepository("User");
     const existingUser = await userRepository.findOne({
@@ -227,18 +250,23 @@ router.post("/coaches/:userId", async (req, res, next) => {
     });
     if (!existingUser) {
       logger.warn("使用者不存在");
-      res.status(400).json({
-        status: "failed",
-        message: "使用者不存在",
-      });
+      next(appError(400, "使用者不存在"));
       return;
+      // res.status(400).json({
+      //   status: "failed",
+      //   message: "使用者不存在",
+      // });
+      // return;
     } else if (existingUser.role === "COACH") {
       logger.warn("使用者已經是教練");
-      res.status(409).json({
-        status: "failed",
-        message: "使用者已經是教練",
-      });
+
+      next(appError(409, "使用者已經是教練"));
       return;
+      // res.status(409).json({
+      //   status: "failed",
+      //   message: "使用者已經是教練",
+      // });
+      // return;
     }
     const coachRepo = dataSource.getRepository("Coach");
     const newCoach = coachRepo.create({
@@ -258,11 +286,13 @@ router.post("/coaches/:userId", async (req, res, next) => {
     );
     if (updatedUser.affected === 0) {
       logger.warn("更新使用者失敗");
-      res.status(400).json({
-        status: "failed",
-        message: "更新使用者失敗",
-      });
+      next(appError(400, "更新使用者失敗"));
       return;
+      // res.status(400).json({
+      //   status: "failed",
+      //   message: "更新使用者失敗",
+      // });
+      // return;
     }
     const savedCoach = await coachRepo.save(newCoach);
     const savedUser = await userRepository.findOne({

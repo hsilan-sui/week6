@@ -3,20 +3,26 @@ const express = require("express");
 const router = express.Router();
 
 const { dataSource } = require("../db/data-source");
+const {
+  isNotValidString,
+  isNotValidInteger,
+  isUndefined,
+} = require("../utils/validUtils");
+const appError = require("../utils/appError");
 const logger = require("../utils/logger")("CreditPackage");
 
 //防呆函式
-function isUndefined(value) {
-  return value === undefined;
-}
+// function isUndefined(value) {
+//   return value === undefined;
+// }
 
-function isNotValidSting(value) {
-  return typeof value !== "string" || value.trim().length === 0 || value === "";
-}
+// function isNotValidSting(value) {
+//   return typeof value !== "string" || value.trim().length === 0 || value === "";
+// }
 
-function isNotValidInteger(value) {
-  return typeof value !== "number" || value < 0 || value % 1 !== 0;
-}
+// function isNotValidInteger(value) {
+//   return typeof value !== "number" || value < 0 || value % 1 !== 0;
+// }
 
 //路由請求邏輯處理
 router.get("/", async (req, res, next) => {
@@ -53,15 +59,21 @@ router.post("/", async (req, res, next) => {
       isUndefined(name) ||
       isUndefined(credit_amount) ||
       isUndefined(price) ||
-      isNotValidSting(name) ||
+      isNotValidString(name) ||
       isNotValidInteger(credit_amount) ||
       isNotValidInteger(price)
     ) {
-      res.status(400).json({
-        status: "failed",
-        message: "欄位未填寫正確",
-      });
+      // res.status(400).json({
+      //   status: "failed",
+      //   message: "欄位未填寫正確",
+      // });
+      next(appError(400, "欄位未填寫正確"));
       return; //忘記
+      // const appError = (status, errMsg, next) => {
+      //   const error = new Error(errMsg);
+      //   error.status = status;
+      //   return error;
+      // };
     }
 
     //防呆2 資料庫有沒有重複的資料
@@ -155,11 +167,13 @@ router.delete("/:creditPackageId", async (req, res, next) => {
     const { creditPackageId } = req.params;
     //console.log(creditPackageId);
     //防呆
-    if (isUndefined(creditPackageId) || isNotValidSting(creditPackageId)) {
-      res.status(400).json({
-        status: "failed",
-        message: "ID錯誤",
-      });
+    if (isUndefined(creditPackageId) || isNotValidString(creditPackageId)) {
+      // res.status(400).json({
+      //   status: "failed",
+      //   message: "ID錯誤",
+      // });
+      next(appError(400, "ID錯誤"));
+      return;
     }
     //建立typeorm creditPackageRepo 物件
     const creditPackageRepo = dataSource.getRepository("CreditPackage");
@@ -175,11 +189,13 @@ router.delete("/:creditPackageId", async (req, res, next) => {
     // }
     //這裡處理失敗的情況
     if (result.affected === 0) {
-      res.status(400).json({
-        status: "failed",
-        message: "ID錯誤",
-      });
+      next(appError(400, "ID錯誤"));
       return;
+      // res.status(400).json({
+      //   status: "failed",
+      //   message: "ID錯誤",
+      // });
+      // return;
     }
 
     res.status(200).json({
