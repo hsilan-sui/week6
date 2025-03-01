@@ -5,6 +5,7 @@ const router = express.Router();
 const { dataSource } = require("../db/data-source");
 const { isNotValidString, isUndefined } = require("../utils/validUtils");
 const appError = require("../utils/appError");
+const { generateJWT } = require("../utils/jwtUtils");
 
 const logger = require("../utils/logger")("User");
 
@@ -126,6 +127,85 @@ router.post("/signup", async (req, res, next) => {
     });
   } catch (error) {
     logger.error("建立使用者錯誤:", error);
+    next(error);
+  }
+});
+
+//使用者登入
+router.post("/login", async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    //isNotValidString, isUndefined
+    if (
+      isNotValidString(email) ||
+      isNotValidString(password) ||
+      isUndefined(email) ||
+      isUndefined(password)
+    ) {
+      logger.warn("欄位未填寫正確");
+      next(appError(400, "欄位未填寫正確"));
+      return;
+    }
+
+    //驗證密碼格式
+    const passwordPattern = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,16}/;
+
+    if (!passwordPattern.test(password)) {
+      logger.warn(
+        "密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字"
+      );
+      next(
+        appError(
+          400,
+          "密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字"
+        )
+      );
+
+      return;
+    }
+
+    const userRepo = dataSource.getRepository("User");
+    const findUser = await userRepo.findOne({
+      select: ["id", "name", "password"],
+      where: { email },
+    });
+
+    if (!findUser) {
+      logger.warn("使用者不存在或密碼輸入錯誤");
+      next(appError(400, "使用者不存在或密碼輸入錯誤"));
+      return;
+    }
+
+    //
+    logger.info(`使用者資料：${JSON.stringify(findUser)}`);
+
+    // 比對使用者請求傳送過來的密碼 是否與 資料庫一致
+    const isMatch = await bcrypt.compare(password, findUser.password);
+    if (!isMatch) {
+      logger.warn("使用者不存在或密碼輸入錯誤");
+      next(appError(400, "使用者不存在或密碼輸入錯誤"));
+      return;
+    }
+
+    // TODO JWT
+    //產生token
+    const token = generateJWT({
+      id: findUser.id,
+      role: findUser.role,
+    });
+    //成功回傳響應
+    res.status(201).json({
+      status: "success",
+      data: {
+        token,
+        user: {
+          name: findUser.name,
+        },
+      },
+    });
+  } catch (error) {
+    logger.error("登入錯誤：", error);
     next(error);
   }
 });
