@@ -8,21 +8,12 @@ const {
   isUndefined,
 } = require("../utils/validUtils");
 const appError = require("../utils/appError");
+
 const logger = require("../utils/logger")("Admin");
+const isAuth = require("../middlewares/isAuth");
 
-// function isUndefined(value) {
-//   return value === undefined;
-// }
-
-// function isNotValidString(value) {
-//   return typeof value !== "string" || value.trim().length === 0 || value === "";
-// }
-
-// function isNotValidInteger(value) {
-//   return typeof value !== "number" || value < 0 || value % 1 !== 0;
-// }
-
-router.post("/coaches/courses", async (req, res, next) => {
+router.post("/coaches/courses", isAuth, async (req, res, next) => {
+  console.log("請求已進入 API");
   try {
     const {
       user_id: userId,
@@ -34,6 +25,7 @@ router.post("/coaches/courses", async (req, res, next) => {
       max_participants: maxParticipants,
       meeting_url: meetingUrl,
     } = req.body;
+
     if (
       isUndefined(userId) ||
       isNotValidString(userId) ||
@@ -56,11 +48,6 @@ router.post("/coaches/courses", async (req, res, next) => {
       logger.warn("欄位未填寫正確");
       next(appError(400, "欄位未填寫正確"));
       return;
-      // res.status(400).json({
-      //   status: "failed",
-      //   message: "欄位未填寫正確",
-      // });
-      // return;
     }
     const userRepository = dataSource.getRepository("User");
     const existingUser = await userRepository.findOne({
@@ -71,20 +58,10 @@ router.post("/coaches/courses", async (req, res, next) => {
       logger.warn("使用者不存在");
       next(appError(400, "使用者不存在"));
       return;
-      // res.status(400).json({
-      //   status: "failed",
-      //   message: "使用者不存在",
-      // });
-      // return;
     } else if (existingUser.role !== "COACH") {
       logger.warn("使用者尚未成為教練");
       next(appError(400, "使用者尚未成為教練"));
       return;
-      // res.status(400).json({
-      //   status: "failed",
-      //   message: "使用者尚未成為教練",
-      // });
-      // return;
     }
     const courseRepo = dataSource.getRepository("Course");
     const newCourse = courseRepo.create({
@@ -98,9 +75,11 @@ router.post("/coaches/courses", async (req, res, next) => {
       meeting_url: meetingUrl,
     });
     const savedCourse = await courseRepo.save(newCourse);
+    console.log("新課程已儲存", savedCourse);
     const course = await courseRepo.findOne({
       where: { id: savedCourse.id },
     });
+
     res.status(201).json({
       status: "success",
       data: {
@@ -113,7 +92,7 @@ router.post("/coaches/courses", async (req, res, next) => {
   }
 });
 
-router.put("/coaches/courses/:courseId", async (req, res, next) => {
+router.put("/coaches/courses/:courseId", isAuth, async (req, res, next) => {
   try {
     const { courseId } = req.params;
     const {

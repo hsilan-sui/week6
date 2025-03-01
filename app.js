@@ -33,7 +33,7 @@ app.get("/healthcheck", (req, res) => {
 });
 
 app.use("/api/credit-package", creditPackageRouter);
-app.use("/api/coachs/skills", skillRouter);
+app.use("/api/coaches/skills", skillRouter);
 app.use("/api/users", userRouter);
 app.use("/api/admin", adminRouter);
 
