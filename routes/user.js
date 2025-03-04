@@ -8,7 +8,7 @@ const appError = require("../utils/appError");
 const { generateJWT } = require("../utils/jwtUtils");
 
 const logger = require("../utils/logger")("User");
-
+const isAuth = require("../middlewares/isAuth");
 const saltRounds = 10;
 
 // function isUndefined(value) {
@@ -206,6 +206,37 @@ router.post("/login", async (req, res, next) => {
     });
   } catch (error) {
     logger.error("登入錯誤：", error);
+    next(error);
+  }
+});
+
+//[GET] 取得個人資料
+router.get("/profile", isAuth, async (req, res, next) => {
+  try {
+    //因為get沒有body資料 但是可以透過isAuth取得該使用者資料
+    const { id } = req.user;
+
+    const findUser = await dataSource.getRepository("User").findOne({
+      where: { id },
+    });
+
+    if (!findUser) {
+      logger.warn("欄位未填寫正確");
+      next(appError(400, "欄位未填寫正確"));
+      return;
+    }
+    //成功回傳響應
+    res.status(200).json({
+      status: "success",
+      data: {
+        user: {
+          email: findUser.email,
+          name: findUser.name,
+        },
+      },
+    });
+  } catch (error) {
+    logger.error("取得使用者資料錯誤", error);
     next(error);
   }
 });
