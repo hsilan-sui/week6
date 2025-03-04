@@ -8,6 +8,7 @@ const creditPackageRouter = require("./routes/creditPackage");
 const skillRouter = require("./routes/skill");
 const userRouter = require("./routes/user");
 const adminRouter = require("./routes/admin");
+const coachesRouter = require("./routes/coaches");
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use("/api/credit-package", creditPackageRouter);
 app.use("/api/coaches/skills", skillRouter);
 app.use("/api/users", userRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/coaches", coachesRouter);
 
 //404 強化錯誤處理機制
 app.use((req, res, next) => {
