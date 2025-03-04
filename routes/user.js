@@ -10,22 +10,16 @@ const { generateJWT } = require("../utils/jwtUtils");
 const logger = require("../utils/logger")("User");
 const isAuth = require("../middlewares/isAuth");
 const saltRounds = 10;
-
-// function isUndefined(value) {
-//   return value === undefined;
-// }
-
-// function isNotValidString(value) {
-//   return typeof value !== "string" || value.trim().length === 0 || value === "";
-// }
+const handleErrorAsync = require("../utils/handleErrorAsync");
 
 //開發使用者
 //[POST] 註冊使用者：{url}/api/users/signup
 //[POST] 將使用者新增為教練：{url}/api/admin/coaches/:userId（要把 user role 改成 COACH ）
 
 //使用者註冊
-router.post("/signup", async (req, res, next) => {
-  try {
+router.post(
+  "/signup",
+  handleErrorAsync(async (req, res, next) => {
     //  /..../表示正規表達式
     //.{8,16} 是 正則表達式中的量詞，用來限制字串長度
     // {最少, 最多}：匹配最少 8 個字元，最多 16 個字元
@@ -125,15 +119,13 @@ router.post("/signup", async (req, res, next) => {
         },
       },
     });
-  } catch (error) {
-    logger.error("建立使用者錯誤:", error);
-    next(error);
-  }
-});
+  })
+);
 
 //使用者登入
-router.post("/login", async (req, res, next) => {
-  try {
+router.post(
+  "/login",
+  handleErrorAsync(async (req, res, next) => {
     const { email, password } = req.body;
 
     //isNotValidString, isUndefined
@@ -204,15 +196,14 @@ router.post("/login", async (req, res, next) => {
         },
       },
     });
-  } catch (error) {
-    logger.error("登入錯誤：", error);
-    next(error);
-  }
-});
+  })
+);
 
 //[GET] 取得個人資料
-router.get("/profile", isAuth, async (req, res, next) => {
-  try {
+router.get(
+  "/profile",
+  isAuth,
+  handleErrorAsync(async (req, res, next) => {
     //因為get沒有body資料 但是可以透過isAuth取得該使用者資料
     const { id } = req.user;
 
@@ -235,15 +226,14 @@ router.get("/profile", isAuth, async (req, res, next) => {
         },
       },
     });
-  } catch (error) {
-    logger.error("取得使用者資料錯誤", error);
-    next(error);
-  }
-});
+  })
+);
 
 //[PUT] 更新個人資料
-router.put("/profile", isAuth, async (req, res, next) => {
-  try {
+router.put(
+  "/profile",
+  isAuth,
+  handleErrorAsync(async (req, res, next) => {
     const { id } = req.user;
     const { name } = req.body;
 
@@ -282,10 +272,7 @@ router.put("/profile", isAuth, async (req, res, next) => {
     res.status(200).json({
       status: "success",
     });
-  } catch (error) {
-    logger.error("無法連線至資料庫", error);
-    next(error);
-  }
-});
+  })
+);
 
 module.exports = router;

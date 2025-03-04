@@ -6,27 +6,12 @@ const { dataSource } = require("../db/data-source");
 const { isNotValidString, isUndefined } = require("../utils/validUtils");
 const appError = require("../utils/appError");
 const logger = require("../utils/logger")("Skill");
+const handleErrorAsync = require("../utils/handleErrorAsync");
 
-//防呆函式
-// function isUndefined(value) {
-//   return value === undefined;
-// }
-
-// function isNotValidString(value) {
-//   return typeof value !== "string" || value.trim().length === 0 || value === "";
-// }
-
-// function isNotValidInteger(value) {
-//   return typeof value !== "number" || value < 0 || value % 1 !== 0;
-// }
-
-// res.status(200).json({
-//   status: "success",
-//   data: creditPackageData,
-// });
 //路由請求邏輯處理
-router.get("/", async (req, res, next) => {
-  try {
+router.get(
+  "/",
+  handleErrorAsync(async (req, res, next) => {
     const skillRepo = dataSource.getRepository("Skill");
 
     const skillData = await skillRepo.find({
@@ -37,18 +22,12 @@ router.get("/", async (req, res, next) => {
       status: "success",
       data: skillData,
     });
-  } catch (error) {
-    logger.error(error);
-    next(error);
-    // res.status(500).json({
-    //   status: "error",
-    //   message: error.message || "伺服器錯誤",
-    // });
-  }
-});
+  })
+);
 
-router.post("/", async (req, res, next) => {
-  try {
+router.post(
+  "/",
+  handleErrorAsync(async (req, res, next) => {
     const { name } = req.body;
     //console.log(name);
 
@@ -100,18 +79,12 @@ router.post("/", async (req, res, next) => {
       status: "success",
       data: result,
     });
-  } catch (error) {
-    logger.error(error);
-    next(error);
-    // res.status(500).json({
-    //   status: "error",
-    //   message: error.message || "伺服器錯誤",
-    // });
-  }
-});
+  })
+);
 
-router.delete("/:skillId", async (req, res, next) => {
-  try {
+router.delete(
+  "/:skillId",
+  handleErrorAsync(async (req, res, next) => {
     const { skillId } = req.params;
     //防呆
     if (isUndefined(skillId) || isNotValidString(skillId)) {
@@ -139,15 +112,8 @@ router.delete("/:skillId", async (req, res, next) => {
     res.status(200).json({
       status: "success",
     });
-  } catch (error) {
-    logger.error(error);
-    next(error);
-    // res.status(500).json({
-    //   status: "error",
-    //   message: error.message || "伺服器錯誤",
-    // });
-  }
-});
+  })
+);
 
 //不要忘記這個
 module.exports = router;

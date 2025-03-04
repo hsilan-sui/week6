@@ -10,23 +10,12 @@ const {
 } = require("../utils/validUtils");
 const appError = require("../utils/appError");
 const logger = require("../utils/logger")("CreditPackage");
-
-//防呆函式
-// function isUndefined(value) {
-//   return value === undefined;
-// }
-
-// function isNotValidSting(value) {
-//   return typeof value !== "string" || value.trim().length === 0 || value === "";
-// }
-
-// function isNotValidInteger(value) {
-//   return typeof value !== "number" || value < 0 || value % 1 !== 0;
-// }
+const handleErrorAsync = require("../utils/handleErrorAsync");
 
 //路由請求邏輯處理
-router.get("/", async (req, res, next) => {
-  try {
+router.get(
+  "/",
+  handleErrorAsync(async (req, res, next) => {
     const creditPackageRepo = dataSource.getRepository("CreditPackage");
     //發送sql查詢這裡才是異步
     const creditPackageData = await creditPackageRepo.find({
@@ -39,19 +28,12 @@ router.get("/", async (req, res, next) => {
       status: "success",
       data: creditPackageData,
     });
-  } catch (error) {
-    //使用logger
-    logger.error(error);
-    next(error);
-    // res.status(500).json({
-    //   status: "error",
-    //   message: error.message || "伺服器錯誤",
-    // });
-  }
-});
+  })
+);
 
-router.post("/", async (req, res, next) => {
-  try {
+router.post(
+  "/",
+  handleErrorAsync(async (req, res, next) => {
     //取的api請求送來的body資料
     const { name, credit_amount, price } = req.body;
     // 防呆1 檢查送來的資料
@@ -151,18 +133,12 @@ router.post("/", async (req, res, next) => {
       status: "success",
       data: result, //直接輸出result物件
     });
-  } catch (error) {
-    // res.status(500).json({
-    //   status: "error",
-    //   message: error.message || "伺服器錯誤",
-    // });
-    logger.error(error);
-    next(error);
-  }
-});
+  })
+);
 
-router.delete("/:creditPackageId", async (req, res, next) => {
-  try {
+router.delete(
+  "/:creditPackageId",
+  handleErrorAsync(async (req, res, next) => {
     //動態路由 取得刪除請求中的路由參數
     const { creditPackageId } = req.params;
     //console.log(creditPackageId);
@@ -202,14 +178,7 @@ router.delete("/:creditPackageId", async (req, res, next) => {
       status: "success",
       //data: result,
     });
-  } catch (error) {
-    logger.error(error);
-    next(error);
-    // res.status(500).json({
-    //   status: "error",
-    //   message: error.message || "伺服器錯誤",
-    // });
-  }
-});
+  })
+);
 
 module.exports = router;
