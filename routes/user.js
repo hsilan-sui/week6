@@ -241,4 +241,51 @@ router.get("/profile", isAuth, async (req, res, next) => {
   }
 });
 
+//[PUT] 更新個人資料
+router.put("/profile", isAuth, async (req, res, next) => {
+  try {
+    const { id } = req.user;
+    const { name } = req.body;
+
+    if (isNotValidString(name)) {
+      next(appError(400, "欄位未填寫正確"));
+      return;
+    }
+
+    const userRepo = dataSource.getRepository("User");
+
+    //檢查使用者名稱未變更
+    const findUser = await userRepo.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (findUser.name === name) {
+      next(appError(400, "使用者名稱未變更"));
+      return;
+    }
+
+    const updateUser = await userRepo.update(
+      {
+        id,
+      },
+      {
+        name,
+      }
+    );
+
+    if (updateUser.affected === 0) {
+      next(appError(400, "更新使用者失敗"));
+    }
+
+    res.status(200).json({
+      status: "success",
+    });
+  } catch (error) {
+    logger.error("無法連線至資料庫", error);
+    next(error);
+  }
+});
+
 module.exports = router;
