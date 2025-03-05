@@ -75,4 +75,59 @@ router.get(
   })
 );
 
+router.get(
+  "/:coachId",
+  handleErrorAsync(async (req, res, next) => {
+    //從url中取出教練id
+    const { coachId } = req.params;
+
+    if (!coachId) {
+      return next(appError(400, "ID格式有誤"));
+    }
+
+    const coachesRepo = dataSource.getRepository("Coach");
+
+    //使用querybuilder
+    const queryBuilder = coachesRepo
+      .createQueryBuilder("coach")
+      .leftJoin("User", "user", "coach.user_id = user.id")
+      .select([
+        "coach.id AS coach_id",
+        "coach.user_id AS user_id",
+        "coach.experience_years AS experience_years",
+        "coach.description AS description",
+        "coach.profile_image_url AS profile_image_url",
+        "coach.created_at AS created_at",
+        "coach.updated_at AS updated_at",
+        "user.name AS user_name",
+        "user.role AS user_role",
+      ])
+      .where("coach.id = :coachId", { coachId });
+
+    const findCoach = await queryBuilder.getRawOne();
+
+    if (!findCoach) {
+      return next(appError(400, "找不到該教練"));
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        user: {
+          name: findCoach.user_name,
+          role: findCoach.user_role,
+        },
+        coach: {
+          id: findCoach.coach_id,
+          user_id: findCoach.user_id,
+          experience_years: findCoach.experience_years,
+          description: findCoach.description,
+          profile_image_url: findCoach.profile_image_url,
+          created_at: findCoach.created_at,
+          updated_at: findCoach.updated_at,
+        },
+      },
+    });
+  })
+);
 module.exports = router;
